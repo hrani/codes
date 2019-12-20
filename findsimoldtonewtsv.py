@@ -189,6 +189,7 @@ def slicelist(itemlist):
 	modelSubsetlist = ""
 	i =1
 	for ms in itemlist:
+		ms = ms.strip(' \n\t\r')
 		if ms != "" or ms != None:
 			key = [k for k, v in jsondata.iteritems() if ms in v]
 			if key:
