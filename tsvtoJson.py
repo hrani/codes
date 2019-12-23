@@ -1,3 +1,9 @@
+##From the findsim tsv file from modellookup,itemstodelete,modelSubset,paramterChange are selected
+# model groupname are replace by groupname_g, modellookup is unchange.
+#This program will written 3 values GmodelLookup: collection of all key:value pair from the modelLookup
+#Ggroup: from subset,itemstodelete if groupname exist then those are listed here
+#Gentities: all the other entities from the tsv from subset,itemstodelete and parameterChange are listed
+
 import csv
 import json
 import os
@@ -9,11 +15,10 @@ def main():
     """
     parser = argparse.ArgumentParser( description = 'This is will take values from the tsv files '
     )
-
+    #parser.add_argument( 'script')#, help='Required: filename of experiment spec, in tsv format.')
     parser.add_argument( '-m', '--model', type = str, help='Genesis file, .g' )
-    parser.add_argument( '-d', '--directory', type = str, help='directory path where experiment sheet file')
-    parser.add_argument( '-f', '--file', type = str, help='Opitional tsvfile' )
-    #parser.add_argument( '-o', '--output', type = str, help='Optional: directory path to save output tsv files',default="/tmp" )
+    parser.add_argument( '-p', '--path', type = str, help='path of a directory or tsv file')
+    #parser.add_argument( '-f', '--file', type = str, help='Opitional tsvfile', default = "")
     args = parser.parse_args()
     tsvfile = ""
     global GmodelLookup,Ggroup,Gentities
@@ -21,83 +26,116 @@ def main():
     GmodelLookup = {}
     Ggroup = {}
     Gentities = []
-    #loadModel('/home/harsha/hrani_FindSim/FindSim_dec2019/models/synSynth7.g','/model',"ee")
-    #convert("/home/harsha/hrani_FindSim/FindSim_dec2019/Curated/FindSim-Bhalla1999_fig2B.tsv",'/model')
-    #convert("/home/harsha/hrani_FindSim/FindSim_dec2019/Curated/FindSim-Bhalla1999_fig2C.tsv",'/model')
-    #convert("/home/harsha/hrani_FindSim/FindSim_dec2019/Curated/FindSim-Bhalla1999_fig4C.tsv",'/model')
-    #print "moodelLookup: ", GmodelLookup,len(GmodelLookup)
-    #print "group: ",Ggroup,len(Ggroup)
-    #print "moose entities: ",Gentities,len(Gentities)
-    #print "gmodel",GmodelLookup
-    
-    # if args.output:
-    # 	output = args.output
-    # else:
-    # 	output = "/tmp"
-    try:
-        with open(args.model, 'r') as json_file:
-        	loadModel(args.model,'/model',"ee")
-        	print(os.path.basename(args.model)," model is loaded into moose under /model",)          
-    except  IOError:
-        print "genesis  file doesn't exist, the program exiting"
-        exit()
-        	
-    if not args.file:
-    	if 	args.directory:
-    		for f in os.listdir(args.directory):
-    			tsvfile = f
-    			if '.tsv' in tsvfile:
-    				#convert(jsondata,args.directory+tsvfile,output)
-    				convert(args.directory+tsvfile,'/model')
-    	else:
-    		print " directory does not exist"
-    		exit()
+    if not args.model:
+    	print ("model path not provided, the program exiting")
+    	exit()
     else:
-    	if args.directory:
-    		try:
-        		with open(args.directory+args.file, 'r') as fn:
-			    	tsvfile = args.file 
-			    	#convert(jsondata, args.directory+tsvfile,output)
-			    	convert(args.directory+tsvfile,'/model')    
-    		except  IOError:
-        		print "tsv file doesn't exist "+args.directory+args.file+", the program exiting"
-        		exit()
+    	try:
+    		with open(args.model,"r") as model_file:
+    			loadModel(args.model,"/model","ee")
+    			print(os.path.basename(args.model)," model is loaded into moose under /model")
+    	except IOError:
+    		print "genesis  file doesn't exist, the program exiting"
+    		exit()
+
+    if not args.path:
+    	print ("path not provided, the program exiting")
+    	exit()
+    else:
+    	if os.path.isdir(args.path):  
+	    		for f in os.listdir(args.path):
+	    			tsvfile = f
+	    			if '.tsv' in tsvfile:
+	    				convert(args.path+tsvfile,'/model')
     	else:
+    		print " directory for running tsv files, does not exist"
+    		exit()
+
+    	if os.path.isfile(args.path):
     		try:
-    			with open(args.file, 'r') as fn:
-			    	tsvfile = args.file 
-			    	#convert(jsondata,tsvfile,output)
-			    	convert(tsvfile,'/model')   
+    			with open(args.path, 'r') as fn:
+    				tsvfile = args.path
+    				convert(tsvfile,'/model')
     		except  IOError:
-        		print "tsv file doesn't exist in "+args.file+", the program exiting"
-        		exit()
-	print "moodelLookup: ", GmodelLookup,len(GmodelLookup)
-    print "group: ",Ggroup,len(Ggroup)
-    print "moose entities: ",Gentities,len(Gentities)
-    print "gmodel",GmodelLookup    
+    			print "tsv file doesn't exist in "+args.file+", the program exiting"
+    			exit()	 
+    	else:
+    		print " tsv file for running, does not exist program exiting"
+    		exit()
+
+
+    # if not args.file:
+    # 	if 	args.directory:
+    # 		if os.path.isdir(args.directory):  
+	   #  		for f in os.listdir(args.directory):
+	   #  			tsvfile = f
+	   #  			if '.tsv' in tsvfile:
+	   #  				convert(args.directory+tsvfile,'/model')
+	   #  	elif os.path.isfile(args.directory):
+	   #  		try:
+    # 				with open(args.directory, 'r') as fn:
+			 #    		tsvfile = args.directory
+			 #    		convert(tsvfile,'/model')          
+    # 			except  IOError:
+    #     			print "tsv file doesn't exist in "+args.file+", the program exiting"
+    #     			exit()	 
+    # 	else:
+    # 		print " directory for running tsv files, does not exist"
+    # 		exit()
+    # else:
+    # 	if args.directory:
+    # 		try:
+    #     		with open(args.directory+args.file, 'r') as fn:
+			 #    	tsvfile = args.file 
+			 #    	convert(args.directory+tsvfile,'/model')    
+    # 		except  IOError:
+    #     		print "tsv file doesn't exist "+args.directory+args.file+", the program exiting"
+    #     		exit()
+    # 	else:
+    # 		try:
+    # 			with open(args.file, 'r') as fn:
+			 #    	tsvfile = args.file 
+			 #    	convert(tsvfile,'/model')   
+    # 		except  IOError:
+    #     		print "tsv file doesn't exist in "+args.file+", the program exiting"
+    #     		exit()
+    print ("\n")
+    print ("##### Result Moose objects to add to Json File ##########")
+    print " Group: ",Ggroup
+    print "moose entities: ",Gentities
+    print "modellookup",GmodelLookup
+    
+	    
 def convert(tsv_file,model):
 	
 #def convert(json_file,tsv_file,output="/tmp"):	
 	fname = tsv_file
-
+	mlookup = []
+	modelLookup = {}
 	writetofile = ""
 	head = ""
+	print("\n")
+	print("#########reading ", os.path.basename(fname))
+	
 	with open(fname, 'rt') as fs:
 		reader = csv.reader(fs, delimiter='\t')
 		for row in reader:
-			if 'modelLookup' == row[0]:
-				if row[1]:
-					mlookup = row[1].split( ',' )
-					
-				if mlookup:
-					modelLookup =  { i.split(':')[0]:i.split(':')[1].strip() for i in mlookup }
-					for k,v in modelLookup.iteritems():
-						if GmodelLookup.has_key(k):
-							if GmodelLookup[k] != v:
-								print("value in globalmodellookup is different from this tsvfile",os.path.basename(fname),k,v, "value in gobal",GmodelLookup[k])
-						else:
-							GmodelLookup[k] = v
-					break;
+			if row:
+				if 'modelLookup' == row[0]:
+					if row[1]:
+						mlookup = row[1].split( ',' )
+						
+					if ':' in mlookup:
+						modelLookup =  { i.split(':')[0]:i.split(':')[1].strip() for i in mlookup }
+						for k,v in modelLookup.iteritems():
+							if GmodelLookup.has_key(k):
+								if GmodelLookup[k] != v:
+									print("value in globalmodellookup is different from this tsvfile",os.path.basename(fname),k,v, "value in gobal",GmodelLookup[k])
+							else:
+								GmodelLookup[k] = v
+						break;
+					else:
+						print("model Mapping-> modelLookup is either empty or not dictionary")
 
 	with open(fname, 'rt') as f:
 		reader = csv.reader(f,delimiter="\t")
@@ -126,10 +164,10 @@ def convert(tsv_file,model):
 					print "check ",head, row[0],row[1]
 				
 			
-			elif 'modelSubset' == row[0] or 'itemstodelete' == row[0]:	
+			elif 'modelSubset' == row[0] or 'itemstodelete' == row[0]:
 				if row[1]:
 					modss = row[1].split(',')
-					group,others = slicelist(modss,model)
+					group,others = slicelist(modss,model,row[0])
 					for k,v in group.iteritems():
 						if Ggroup.has_key(k):
 							if Ggroup[k] != v:
@@ -157,28 +195,33 @@ def readParameter(fd, para, width,lineno):
         if cols[0].strip().lower() == "object":
             continue
         para.append(cols[0])
-def slicelist(itemlist,model):
+
+def slicelist(itemlist,model,head):
 	notfound =""
 	modelSubsetlist = ""
 	i =1
 	group = {}
 	others = []
+	noRaise = False
 	for ms in itemlist:
 		if ms != "" or ms != None:
 			rootpath = model
-			name = ms
+			name = ms.strip(' \n\t\r')
 			try1 = wildcardFind( rootpath+'/' + name )
 	        try2 = wildcardFind( rootpath+'/##/' + name )
 	        try2 = [ i for i in try2 if not '/model[0]/plots[0]' in i.path ]  
-	        
 	        if len( try1 ) + len( try2 ) > 1:
 	            raise SimError( "findObj: ambiguous name: '{}'".format(name) )
+			#
 	        if len( try1 ) + len( try2 ) == 0:
+                    print ("no element found under moose path in ",head,"-->",ms)
+		    '''
 	            if noRaise:
 	                print element('/')
 	            else:
 	                raise SimError( "findObj: No object found named: '{}'".format( name) )
-	        if len( try1 ) == 1:
+		   '''
+	        elif len( try1 ) == 1:
 	            if(try1[0].className== 'Neutral'):
 	            	cc = element(try1[0]).name+"_g"
 	            	group[cc] = name
