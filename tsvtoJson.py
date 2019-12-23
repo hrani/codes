@@ -47,11 +47,8 @@ def main():
 	    			tsvfile = f
 	    			if '.tsv' in tsvfile:
 	    				convert(args.path+tsvfile,'/model')
-    	else:
-    		print " directory for running tsv files, does not exist"
-    		exit()
-
-    	if os.path.isfile(args.path):
+    	
+    	elif os.path.isfile(args.path):
     		try:
     			with open(args.path, 'r') as fn:
     				tsvfile = args.path
@@ -60,7 +57,7 @@ def main():
     			print "tsv file doesn't exist in "+args.file+", the program exiting"
     			exit()	 
     	else:
-    		print " tsv file for running, does not exist program exiting"
+    		print " directory/tsv file for running does not exist, program exiting"
     		exit()
 
 

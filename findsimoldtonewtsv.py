@@ -14,12 +14,13 @@ import argparse
 def main():
     """ This program convertes findsim old tsv file format to new format with JSON.
     """
-    parser = argparse.ArgumentParser( description = 'This is will convert old findsim experiment sheet to new format on the basis of JSon '
-    )
-    parser.add_argument( 'script', type = str, help='Required: Json file and atleast one filename of experiment spec, in tsv format or directory in which experiment file resides.')
+    parser = argparse.ArgumentParser( description = 'This is will convert old findsim experiment sheet to new format on the basis of JSon ')
+    #parser.add_argument( 'script', type = str, help='Required: Json file and atleast one filename of experiment spec, in tsv format or directory in which experiment file resides.')
     parser.add_argument( '-j', '--json', type = str, help='Json filename, .json' )
-    parser.add_argument( '-d', '--directory', type = str, help='directory path where experiment sheet file')
-    parser.add_argument( '-f', '--file', type = str, help='Opitional tsvfile' )
+    parser.add_argument( '-p', '--path', type = str, help='path of a directory or tsv file')
+
+    #parser.add_argument( '-d', '--directory', type = str, help='directory path where experiment sheet file')
+    #parser.add_argument( '-f', '--file', type = str, help='Opitional tsvfile' )
     parser.add_argument( '-o', '--output', type = str, help='Optional: directory path to save output tsv files',default="/tmp" )
     args = parser.parse_args()
     jsonfile = ""
@@ -29,50 +30,40 @@ def main():
     	output = args.output
     else:
     	output = "/tmp"
-    try:
-        with open(args.json, 'r') as json_file:
-        	jsondata = json.load(json_file)
-        	print(" json file exist ")          
-    except  IOError:
-        print "json file doesn't exist, the program exiting"
-        exit()
-    	
-    if not args.file:
-    	if 	args.directory:
-    		if os.path.isdir(args.directory):  
-	    		for f in os.listdir(args.directory):
+    if args.json:
+	    try:
+	        with open(args.json, 'r') as json_file:
+	        	jsondata = json.load(json_file)
+	        	print(" json file exist ")          
+	    except  IOError:
+	        print "json file doesn't exist, the program exiting"
+	        exit()
+    else:
+    	print "json file doesn't exist, the program exiting"
+    	exit()
+
+    if not args.path:
+    	print ("path to directory or tsv file not provided, the program exiting")
+    	exit()
+    else:
+    	if os.path.isdir(args.path):  
+	    		for f in os.listdir(args.path):
 	    			tsvfile = f
 	    			if '.tsv' in tsvfile:
-	    				convert(jsondata,args.directory+tsvfile,output)
-	    	elif os.path.isfile(args.directory):
-	    		try:
-    				with open(args.directory, 'r') as fn:
-			    		tsvfile = args.directory
-			    		convert(jsondata,tsvfile,output)          
-    			except  IOError:
-        			print "tsv file doesn't exist in "+args.file+", the program exiting"
-        			exit()	 
+	    				convert(jsondata,args.path+tsvfile,output)
+    	
+    	elif os.path.isfile(args.path):
+    		try:
+    			with open(args.path, 'r') as fn:
+    				tsvfile = args.path
+    				convert(jsondata,tsvfile,output)
+    		except  IOError:
+    			print "tsv file doesn't exist in "+args.file+", the program exiting"
+    			exit()	 
     	else:
-    		print " directory does not exist"
+    		print " directory /tsv file for running is not provided, the program exiting"
     		exit()
-    else:
-    	if args.directory:
-    		try:
-        		with open(args.directory+args.file, 'r') as fn:
-			    	tsvfile = args.file 
-			    	convert(jsondata, args.directory+tsvfile,output)       
-    		except  IOError:
-        		print "tsv file doesn't exist "+args.directory+args.file+", the program exiting"
-        		exit()
-    	else:
-    		try:
-    			with open(args.file, 'r') as fn:
-			    	tsvfile = args.file 
-			    	convert(jsondata,tsvfile,output)          
-    		except  IOError:
-        		print "tsv file doesn't exist in "+args.file+", the program exiting"
-        		exit()
-
+    
  
 def convert(json_file,tsv_file,output="/tmp"):	
 	fname = tsv_file
