@@ -14,9 +14,9 @@ import argparse
 def main():
     """ This program convertes findsim old tsv file format to new format with JSON.
     """
-    parser = argparse.ArgumentParser( description = 'This is will convert old findsim experiment sheet to new format on the bases of JSon '
+    parser = argparse.ArgumentParser( description = 'This is will convert old findsim experiment sheet to new format on the basis of JSon '
     )
-
+    parser.add_argument( 'script', type = str, help='Required: Json file and atleast one filename of experiment spec, in tsv format or directory in which experiment file resides.')
     parser.add_argument( '-j', '--json', type = str, help='Json filename, .json' )
     parser.add_argument( '-d', '--directory', type = str, help='directory path where experiment sheet file')
     parser.add_argument( '-f', '--file', type = str, help='Opitional tsvfile' )
@@ -39,10 +39,19 @@ def main():
     	
     if not args.file:
     	if 	args.directory:
-    		for f in os.listdir(args.directory):
-    			tsvfile = f
-    			if '.tsv' in tsvfile:
-    				convert(jsondata,args.directory+tsvfile,output)
+    		if os.path.isdir(args.directory):  
+	    		for f in os.listdir(args.directory):
+	    			tsvfile = f
+	    			if '.tsv' in tsvfile:
+	    				convert(jsondata,args.directory+tsvfile,output)
+	    	elif os.path.isfile(args.directory):
+	    		try:
+    				with open(args.directory, 'r') as fn:
+			    		tsvfile = args.directory
+			    		convert(jsondata,tsvfile,output)          
+    			except  IOError:
+        			print "tsv file doesn't exist in "+args.file+", the program exiting"
+        			exit()	 
     	else:
     		print " directory does not exist"
     		exit()
@@ -68,20 +77,20 @@ def main():
 def convert(json_file,tsv_file,output="/tmp"):	
 	fname = tsv_file
 	modelLookup = {}
+	mlookup = []
 	writetofile = ""
 	head = ""
+	print("reading ", os.path.basename(fname))
 	with open(fname, 'rt') as fs:
 		reader = csv.reader(fs, delimiter='\t')
 		for row in reader:
-
-			if 'modelLookup' == row[0]:
-				if row[1]:
-					mlookup = row[1].split( ',' )
-					
-				if mlookup:
-					modelLookup =  { i.split(':')[0]:i.split(':')[1].strip() for i in mlookup }
-					break;
-		print modelLookup
+			if row:
+				if 'modelLookup' == row[0]:
+					if row[1]:
+						mlookup = row[1].split( ',' )
+					if ':' in mlookup:
+						modelLookup =  { i.split(':')[0]:i.split(':')[1].strip() for i in mlookup }
+						break;
 	with open(fname, 'rt') as f:
 		reader = csv.reader(f,delimiter="\t")
 		#print reader[0]
@@ -97,7 +106,8 @@ def convert(json_file,tsv_file,output="/tmp"):
 			
 			lineno +=1
 			#print row.split('\t')
-			if row[0] == "Stimuli" or row[0] =="Readouts" or row[0] == "Model mapping":
+			#head = row[0]
+			if row[0] == "Experiment metadata" or row[0] == "Stimuli" or row[0] =="Readouts" or row[0] == "Model mapping":
 				head = row[0]
 				writetofile += "\n"+row[0]+"\n"
 			
@@ -121,7 +131,7 @@ def convert(json_file,tsv_file,output="/tmp"):
 							print head, "-->",row[0]," --- No entry found in Json file for in -->",row[1], "writing as its"
 							writetofile += row[1]+"\n"		
 					else:
-						print head, "-->", row[0],"key not found in modelLookup"
+						print head, "-->", row[1],"key not found in modelLookup"
 						writetofile += "\n"
 				else:
 					writetofile +="\t\n"
@@ -153,7 +163,10 @@ def convert(json_file,tsv_file,output="/tmp"):
 							print ("Parameter change key not found ", rr[0])
 				writetofile += modelparChange
 			else:
-				if row[0] not in ['modelSource','fileName','citationId','citation','authors','scoringFormula','solver','modelLookup']:
+				if head == "Model mapping": 
+					if (row[0] not in ['modelSource','fileName','citationId','citation','authors','scoringFormula','solver','modelLookup']):
+						writetofile = writetofile+"\t".join(row)
+				else:
 					writetofile = writetofile+"\t".join(row)
 	fileName = os.path.basename(tsv_file)
 	newfile = output+"/New_"+fileName
