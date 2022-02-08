@@ -3,8 +3,8 @@ name: CI
 on:
   push:
     branches:
-      - master
-  pull_request: {}
+      - zombie_gone
+  pull_request: {zombie_gone}
 
 jobs:
   Windows:
