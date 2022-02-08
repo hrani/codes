@@ -1,0 +1,36 @@
+name: CI
+# Workflow file for ununtu
+on:
+  push:
+    branches:
+      - master
+  pull_request: {}
+
+jobs:
+  Windows:
+    name: build-linux
+    runs-on: [self-hosted, ubuntu]
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v1
+      with:
+          submodules: recursive
+
+    - name: Installing moose (ubuntu)
+      run: |
+        cd ..
+        git clone --single-branch -branch zombie_gone https://github.com/bhallalab/moose-core.git
+        cd zombie_gone
+        
+
+    - name: Running cmake (ubuntu)
+      run: |
+        cd ${{ github.workspace }}
+        mkdir _build
+        cd _build
+        cmake .. 
+    - name: Build make  (ubuntu)
+      run: |
+        cd _build
+        make
