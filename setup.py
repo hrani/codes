@@ -12,11 +12,11 @@
 #  * Python2
 #   - Update setuptools using `python2 -m pip install setuptools --upgrade --user'.
 
-__author__     = "Dilawar Singh"
+__author__     = ""
 
 __copyright__  = "Copyright 2019-, Dilawar Singh"
-__maintainer__ = "Dilawar Singh"
-__email__      = "dilawar.s.rajput@gmail.com"
+__maintainer__ = ""
+__email__      = ""
 
 import os
 import sys
