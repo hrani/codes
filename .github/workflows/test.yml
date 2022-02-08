@@ -3,7 +3,7 @@ name: CI
 on:
   push:
     branches:
-      - zombie_gone
+      - master
   pull_request: {zombie_gone}
 
 jobs:
