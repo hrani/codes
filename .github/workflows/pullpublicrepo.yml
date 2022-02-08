@@ -18,6 +18,6 @@ jobs:
 
     - name: Get branch name
       id: moose-core
-      uses: hrani/moose-core@v2
+      uses: hrani/moose-core@v2-beta
 
     
