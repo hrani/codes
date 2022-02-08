@@ -13,11 +13,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       
-      - name: Clone GuillaumeFalourd/poc-github-actions PUBLIC repository
-        uses: GuillaumeFalourd/clone-github-repo-action@main
+      - name: Clone hrani/moose-core PUBLIC repository
+        uses: hrani/moose-core@main
         with:
-          owner: 'GuillaumeFalourd'
-          repository: 'poc-github-actions'
+          owner: 'hrani'
+          repository: 'moose-core'
       
       - name: Access cloned repository content
         run: |
