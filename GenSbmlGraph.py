@@ -156,6 +156,8 @@ def jsontoPng(modelpath, outputfile, ranksep = 0, hasLegend = True, fontsize = 1
 		
 	
 	writeSpecies(modelpath,groupmap)
+	chanlist = writechan(modelpath,groupmap,f_graph,edge_arrowsize,edge_weight, displayGroups, fontsize = fontsize - 2)
+	
 	funclist = writeFunc(modelpath,groupmap,f_graph,edge_arrowsize,edge_weight, displayGroups, fontsize = fontsize - 2)
 	reaclist,node_color= writeReac(modelpath,groupmap,f_graph,edge_arrowsize,edge_weight,displayGroups,fontsize = fontsize - 2)
 	enzlist,node_color = writeEnz(modelpath,groupmap,f_graph,edge_arrowsize,edge_weight,displayGroups,fontsize = fontsize - 2)
@@ -170,53 +172,73 @@ def jsontoPng(modelpath, outputfile, ranksep = 0, hasLegend = True, fontsize = 1
 			sps = ""
 			if Cmpt in groupmap:
 				items = groupmap[Cmpt]
-				#print(items)
+				
 				for sp in items:
 						if items.index(sp) != 0:
-							sps = sps+','+sp
+							if type(sp) is tuple:
+								sps = sps+'\n'+sp[0]+' [label=\"'+moose.element(sp[1]).name+'\"]'
+							else:
+								sps = sps+'\n'+sp
 						else:
-							sps = sps+sp
+							if type(sp) is tuple:
+								sps = sps+sp[0]+' [label=\"'+moose.element(sp[1]).name+'\"]'
+							else:
+								sps = sps+'\n'+sp	
 				s = s+sps
 				compt_no += 1;
 			for grp in moose.wildcardFind(Cmpt.path+'/##[TYPE=Neutral]'):
-				s = s + "\nsubgraph cluster_"+str(group_no)+"_"+str(compt_no)+"i\n{"
-				s = s+"\nsubgraph cluster_"+str(group_no)+"\n{"+"\n"+"label=\""+grp.name+"\";\npenwidth=4; margin=10.0\ncolor=\""+color+"\";\nfontsize="+str(fontsize + 2)+";\n"
-				sps = ""
-				items = groupmap[grp]
-				items = list(unique(items))
-				for sp in items:
-					if items.index(sp) != 0:
-						sps = sps+','+sp
-					else:
-						sps = sps+sp
-				s = s+sps+"\n} style=invisible\n}"
-				group_no += 1;
+				if grp in groupmap:
+					s = s + "\nsubgraph cluster_"+str(group_no)+"_"+str(compt_no)+"i\n{"
+					s = s+"\nsubgraph cluster_"+str(group_no)+"\n{"+"\n"+"label=\""+grp.name+"\";\npenwidth=4; margin=10.0\ncolor=\""+color+"\";\nfontsize="+str(fontsize + 2)+";\n"
+					sps = ""
+					#print("groupmap ",groupmap,grp)
+					items = groupmap[grp]
+					items = list(unique(items))
+					for sp in items:
+						if items.index(sp) != 0:
+							if type(sp) is tuple:
+								sps = sps+'\n'+sp[0]+' [label=\"'+moose.element(sp[1]).name+'\"]'
+							else:
+								sps = sps+'\n'+sp
+						else:
+							if type(sp) is tuple:
+								sps = sps+sp[0]+' [label=\"'+moose.element(sp[1]).name+'\"]'
+							else:
+								sps = sps+'\n'+sp	
+					s = s+sps+"\n} style=invisible\n}"
+					group_no += 1;
 			s = s +"\n}"
 			
 	f_graph.write(s)
+	f_graph.write(chanlist)
 	f_graph.write(funclist)
 	f_graph.write(reaclist)
 	f_graph.write(enzlist)
 	
 	nodeIndex = 0
-	for k,vl in groupmap.items():
+	for k,uu in groupmap.items():
+		#print("s ",k)
 		if k in displayGroups:
-			for l in vl:
-				if l in node_color:
-					v = node_color[l]
-					v,nodeIndex = getColor(nodeIndex)
-					ii = modelpath.path+'/##[FIELD(name)='+l+']'
-					# for ll in moose.wildcardFind(ii):
-					# 	if(len(ll.neighbors['nOut']) == 0  and  len(ll.neighbors['reacDest']) == 0):
-					# 		#print("pools not connected to any obj ",ll)
-					# 		pass
-					# 	else:
-					# 		f_graph.write("\n"+l+"[color=\""+v+"\"]")
-					f_graph.write("\n"+l+"[color=\""+v+"\"]")
+			
+			for vl in uu:
+				if type(vl) is tuple:
+					l = vl[0]
+					if l in node_color:
+						v = node_color[l]
+						v,nodeIndex = getColor(nodeIndex)
+						ii = modelpath.path+'/##[FIELD(name)='+l+']'
+						# for ll in moose.wildcardFind(ii):
+						# 	if(len(ll.neighbors['nOut']) == 0  and  len(ll.neighbors['reacDest']) == 0):
+						# 		#print("pools not connected to any obj ",ll)
+						# 		pass
+						# 	else:
+						# 		f_graph.write("\n"+l+"[color=\""+v+"\"]")
+						f_graph.write("\n"+l+"[color=\""+v+"\"]")
 	for p,q in startstringdigit.items():
 		if p in displayGroups:
 			for m,n in q.items():
-				f_graph.write("\n"+n+"[label=\""+m+"\"]")	
+				pass #print("n",n,m)
+				#f_graph.write("\n"+n+"[label=\""+m+"\"]")	
 	
 	if hasLegend:
 		
@@ -253,21 +275,26 @@ def findGroup_compt(melement):
 def writeSpecies(modelpath, groupmap):
 	# getting all the species
 	mIndex = 0
+	numMol = 0 
 	for mol in ( moose.wildcardFind(modelpath.path+'/##[ISA=PoolBase]') ):
 		molname = mol.name
+		molsize = "mol"+str(numMol)
+		numMol+=1
+		
 		if (mol.parent).className != 'Enz':
 			molgrp = findGroup_compt(mol)
 			checkSpecialChar(startstringdigit,molgrp,molname)
 			molname = checkdigitEqu(startstringdigit,molgrp,mol)
+
 			if molname not in node_color:
 				spe_color,mIndex = getColor(mIndex)
-				node_color[molname] = spe_color
-
+				#node_color[molname] = spe_color
+				node_color[molsize] = spe_color
 			if molgrp in groupmap:
-				groupmap[molgrp].append(molname)
+				groupmap[molgrp].append((molsize,mol))
 			else:
-				groupmap[molgrp] = [molname]
-
+				groupmap[molgrp] = [(molsize,mol)]
+	
 def writeFunc(modelpath,groupmap,f_graph,edge_arrowsize,edge_weight,displayGroups, fontsize = 16):
 	equation_pluse = 0
 	equation_sigma = 0
@@ -288,22 +315,74 @@ def writeFunc(modelpath,groupmap,f_graph,edge_arrowsize,edge_weight,displayGroup
 			edgelist = edgelist+"\n"+plusesize+"[label=<&Sigma; "+str(equation_sigma)+ ">,shape=circle]"
 		groupmap[tgrp].append(plusesize)
 		for tsubs in unique(tt.neighbors['input']):
-			input_color = node_color[tsubs.name]
+			#print(tsubs,tsubs.parent,groupmap[tsubs.parent])
+			for oo in groupmap[tsubs.parent]:
+				#print(" k, l ",oo)
+				if type(oo) is tuple:
+					if oo[1] == moose.element(tsubs):
+						tsubs1 = oo[0]
+						#print (tsubs1)
+			input_color = node_color[tsubs1]
 			#c = countX(tsubs,tt.neighbors['input'])
 			c = 1
 			tsubsname = checkdigitEqu(startstringdigit,tgrp,tsubs)
 
 			if tgrp in displayGroups:
-				edgelist = edgelist+"\n"+tsubsname+"->"+plusesize+"[arrowhead=vee weight = "+str(edge_weight)+" color=\""+input_color+ "\" arrowsize = "+str(edge_arrowsize)+""
+				#print(tsubsname,"#####",tsubs1)
+				edgelist = edgelist+"\n"+tsubs1+"->"+plusesize+"[arrowhead=vee weight = "+str(edge_weight)+" color=\""+input_color+ "\" arrowsize = "+str(edge_arrowsize)+""
 				if c > 1:
 					edgelist = edgelist+ " label=\" "+str(c)+"\" fontsize={}".format( fontsize )
 				edgelist = edgelist+"]"
 		if tgrp in displayGroups:
 			outputpool = t.neighbors['valueOut']
+			#print("### ",outputpool,outputpool[0].parent)
+			for oo in groupmap[outputpool[0].parent]:
+				#print(" k, l ",oo)
+				if type(oo) is tuple:
+					if oo[1] == moose.element(outputpool[0]):
+						outputpoolname1 = oo[0]
+						#print (tsubs1)
 			outputpoolname = checkdigitEqu(startstringdigit,tgrp,outputpool[0])
-			edgelist = edgelist+"\n"+plusesize+"->"+outputpoolname+"[arrowhead=vee weight = "+str(edge_weight)+ " arrowsize = "+str(edge_arrowsize)+"]"
+			edgelist = edgelist+"\n"+plusesize+"->"+outputpoolname1+"[arrowhead=vee weight = "+str(edge_weight)+ " arrowsize = "+str(edge_arrowsize)+"]"
 	return edgelist
-
+def writechan(modelpath,groupmap,f_graph,edge_arrowsize,edge_weight,displayGroups,fontsize = 16):
+	chanlist = ""
+	chan_color_list =[]
+	sIndex = 0
+	pIndex = 0 
+	numchan = 0
+	
+	for chan in moose.wildcardFind( modelpath.path+'/##[ISA=ConcChan]'):
+		changrp = findGroup_compt(chan)
+		channame = chan.name 
+		parChan = chan.parent
+		chansize = "chan"+str(numchan)
+		numchan+=1
+		groupmap[changrp].append(chansize)
+		for oo in groupmap[parChan.parent]:
+				#print(" k, l ",oo)
+				if type(oo) is tuple:
+					if oo[1] == moose.element(parChan):
+						parchan1 = oo[0]
+				chanlist = chanlist+"\n"+chansize+"[label=<> shape=restrictionsite]"
+		chanlist = chanlist+"\n"+parchan1+"->"+chansize+"[arrowhead=none]"
+		inputChan = chan.neighbors['inPoolOut']
+		for oo in groupmap[moose.element(inputChan[0]).parent]:
+				if type(oo) is tuple:
+					if oo[1] == moose.element(inputChan[0]):
+						inpchan1 = oo[0]
+		
+		chanlist = chanlist +"\n"+inpchan1+"->"+chansize+"[arrowhead=normal weight = "+str(edge_weight)+ " arrowsize = "+str(edge_arrowsize)+ " style=bold]"
+		outputChan = chan.neighbors['outPoolOut']
+		for oo in groupmap[moose.element(outputChan[0]).parent]:
+				if type(oo) is tuple:
+					if oo[1] == moose.element(outputChan[0]):
+						outchan1 = oo[0]
+		
+		chanlist = chanlist +"\n"+chansize+"->"+outchan1+"[arrowhead=normal weight = "+str(edge_weight)+ " arrowsize = "+str(edge_arrowsize)+ " style=bold]"
+		
+	return(chanlist)
+	
 def writeEnz(modelpath,groupmap,f_graph,edge_arrowsize,edge_weight,displayGroups,fontsize = 16):
 	edgelist1 = ""
 	enzyme_color_list =[]
@@ -325,36 +404,52 @@ def writeEnz(modelpath,groupmap,f_graph,edge_arrowsize,edge_weight,displayGroups
 		
 		groupmap[enzgrp].append(enzsize)
 		enzpar = checkdigitEqu(startstringdigit,enzgrp,enz.parent)
-		edgelist1 = edgelist1+"\n"+enzpar+"->"+enzsize+"[arrowhead=none]"
+		#print("### ",enz.parent)
+		for oo in groupmap[(enz.parent).parent]:
+				#print(" k, l ",oo)
+				if type(oo) is tuple:
+					if oo[1] == moose.element(enz.parent):
+						enzpar1 = oo[0]
+		edgelist1 = edgelist1+"\n"+enzpar1+"->"+enzsize+"[arrowhead=none]"
 				
 		for sub in sublistU:
 			c = countX(sublist,sub)
+			for oo in groupmap[sub.parent]:
+				#print(" k, l ",oo)
+				if type(oo) is tuple:
+					if oo[1] == moose.element(sub):
+						newsub1 = oo[0]
 			subname = sub.name
 			subgrp = findGroup_compt(sub)	
 			newsub = checkdigitEqu(startstringdigit,subgrp,sub)
-			if newsub in node_color:
-				enzyme_color = node_color[newsub]
+			if newsub1 in node_color:
+				enzyme_color = node_color[newsub1]
 			else:
 				enzyme_color,sIndex = getColor(sIndex)
-				node_color[newsub] = enzyme_color
+				node_color[newsub1] = enzyme_color
 			if c >1:
-				edgelist1 = edgelist1 +"\n"+newsub+"->"+enzsize+"[arrowhead=normal weight = "+str(edge_weight)+ " arrowsize = "+str(edge_arrowsize)+" color=\""+enzyme_color+":"+enzyme_color+"\""+ " label=\" "+str(c)+"\" style=bold]"
+				edgelist1 = edgelist1 +"\n"+newsub1+"->"+enzsize+"[arrowhead=normal weight = "+str(edge_weight)+ " arrowsize = "+str(edge_arrowsize)+" color=\""+enzyme_color+":"+enzyme_color+"\""+ " label=\" "+str(c)+"\" style=bold]"
 			else:
-				edgelist1 = edgelist1 +"\n"+newsub+"->"+enzsize+"[arrowhead=normal weight = "+str(edge_weight)+ " arrowsize = "+str(edge_arrowsize)+" color=\""+enzyme_color+":"+enzyme_color+"\" style=bold]"
+				edgelist1 = edgelist1 +"\n"+newsub1+"->"+enzsize+"[arrowhead=normal weight = "+str(edge_weight)+ " arrowsize = "+str(edge_arrowsize)+" color=\""+enzyme_color+":"+enzyme_color+"\" style=bold]"
 		for prd in prdlistU:
 			c = countX(prdlist,prd)
+			for oo in groupmap[prd.parent]:
+				#print(" k, l ",oo)
+				if type(oo) is tuple:
+					if oo[1] == moose.element(prd):
+						newprd1 = oo[0]
 			prdname = prd.name
 			prdgrp = findGroup_compt(prd)
 			newprd = checkdigitEqu(startstringdigit,prdgrp,prd)
-			if newprd in node_color:
-				enzyme_color = node_color[newprd]
+			if newprd1 in node_color:
+				enzyme_color = node_color[newprd1]
 			else:
 				enzyme_color,sIndex = getColor(sIndex)
-				node_color[newprd] = enzyme_color
+				node_color[newprd1] = enzyme_color
 			if c >1:
-				edgelist1 = edgelist1 +"\n"+enzsize+"->"+newprd+"[arrowhead=normal weight = "+str(edge_weight)+ " arrowsize = "+str(edge_arrowsize)+" color=\""+enzyme_color+":"+enzyme_color+"\""+ " label=\" "+str(c)+"\" style=bold]"
+				edgelist1 = edgelist1 +"\n"+enzsize+"->"+newprd1+"[arrowhead=normal weight = "+str(edge_weight)+ " arrowsize = "+str(edge_arrowsize)+" color=\""+enzyme_color+":"+enzyme_color+"\""+ " label=\" "+str(c)+"\" style=bold]"
 			else:
-				edgelist1 = edgelist1 +"\n"+enzsize+"->"+newprd+"[arrowhead=normal weight = "+str(edge_weight)+ " arrowsize = "+str(edge_arrowsize)+" color=\""+enzyme_color+":"+enzyme_color+"\" style=bold]"
+				edgelist1 = edgelist1 +"\n"+enzsize+"->"+newprd1+"[arrowhead=normal weight = "+str(edge_weight)+ " arrowsize = "+str(edge_arrowsize)+" color=\""+enzyme_color+":"+enzyme_color+"\" style=bold]"
 	return(edgelist1,node_color)
 
 def writeReac(modelpath,groupmap,f_graph,edge_arrowsize,edge_weight,displayGroups,fontsize = 16):
@@ -377,33 +472,50 @@ def writeReac(modelpath,groupmap,f_graph,edge_arrowsize,edge_weight,displayGroup
 		groupmap[reacgrp].append(reacsize)
 		for sub in sublistU:
 			c = countX(sublist,sub)
+			#print(sub, sub.parent)
+			#print ("\n",sub,groupmap[sub.parent])
+			#iii = [k for k,l in groupmap[sub.parent].items() if l == moose.element(sub)]
+			for oo in groupmap[sub.parent]:
+				#print(" k, l ",oo)
+				if type(oo) is tuple:
+					if oo[1] == moose.element(sub):
+						newsub1 = oo[0]
+			#print("|n ",newsub)
 			subname = sub.name
 			subgrp = findGroup_compt(sub)
 			newsub = checkdigitEqu(startstringdigit,subgrp,sub)
 			#print("sub ",reacsize,reacgrp, subname, "## ",newsub)
-			if newsub in node_color:
-				reaction_color = node_color[newsub]
+			if newsub1 in node_color:
+				reaction_color = node_color[newsub1]
 			else:
 				reaction_color,sIndex = getColor(sIndex)
-				node_color[newsub] = reaction_color
+				node_color[newsub1] = reaction_color
+
 			if c >1:
-				edgelist1 = edgelist1 +"\n"+newsub+"->"+reacsize+"[arrowhead=normal weight = "+str(edge_weight)+ " arrowsize = "+str(edge_arrowsize)+" color=\""+reaction_color+":"+reaction_color+"\""+ " label=\" "+str(c)+"\" style=bold]"
+				#print("416 ",newsub,newsub1,reacsize)
+
+				edgelist1 = edgelist1 +"\n"+newsub1+"->"+reacsize+"[arrowhead=normal weight = "+str(edge_weight)+ " arrowsize = "+str(edge_arrowsize)+" color=\""+reaction_color+":"+reaction_color+"\""+ " label=\" "+str(c)+"\" style=bold]"
 			else:
-				edgelist1 = edgelist1 +"\n"+newsub+"->"+reacsize+"[arrowhead=normal weight = "+str(edge_weight)+ " arrowsize = "+str(edge_arrowsize)+" color=\""+reaction_color+":"+reaction_color+"\" style=bold]"
+				edgelist1 = edgelist1 +"\n"+newsub1+"->"+reacsize+"[arrowhead=normal weight = "+str(edge_weight)+ " arrowsize = "+str(edge_arrowsize)+" color=\""+reaction_color+":"+reaction_color+"\" style=bold]"
 		for prd in prdlistU:
 			c = countX(prdlist,prd)
+			for oo in groupmap[prd.parent]:
+				#print(" k, l ",oo)
+				if type(oo) is tuple:
+					if oo[1] == moose.element(prd):
+						newprd1 = oo[0]
 			prdname = prd.name
 			prdgrp = findGroup_compt(prd)
 			newprd = checkdigitEqu(startstringdigit,prdgrp,prd)
-			if newprd in node_color:
-				reaction_color = node_color[newprd]
+			if newprd1 in node_color:
+				reaction_color = node_color[newprd1]
 			else:
 				reaction_color,sIndex = getColor(sIndex)
-				node_color[newprd] = reaction_color
+				node_color[newprd1] = reaction_color
 			if c >1:
-				edgelist1 = edgelist1 +"\n"+reacsize+"->"+newprd+"[arrowhead=normal weight = "+str(edge_weight)+ " arrowsize = "+str(edge_arrowsize)+" color=\""+reaction_color+":"+reaction_color+"\""+ " label=\" "+str(c)+"\" style=bold]"
+				edgelist1 = edgelist1 +"\n"+reacsize+"->"+newprd1+"[arrowhead=normal weight = "+str(edge_weight)+ " arrowsize = "+str(edge_arrowsize)+" color=\""+reaction_color+":"+reaction_color+"\""+ " label=\" "+str(c)+"\" style=bold]"
 			else:
-				edgelist1 = edgelist1 +"\n"+reacsize+"->"+newprd+"[arrowhead=normal weight = "+str(edge_weight)+ " arrowsize = "+str(edge_arrowsize)+" color=\""+reaction_color+":"+reaction_color+"\" style=bold]"
+				edgelist1 = edgelist1 +"\n"+reacsize+"->"+newprd1+"[arrowhead=normal weight = "+str(edge_weight)+ " arrowsize = "+str(edge_arrowsize)+" color=\""+reaction_color+":"+reaction_color+"\" style=bold]"
 	return(edgelist1,node_color)
 		
 
@@ -448,9 +560,9 @@ if __name__ == "__main__":
 	#modelpath = moose.loadModel(args.model,'/model')
 	ext = (os.path.splitext(args.model)[1][1:]).lower()
 	if ext == "xml":
-		modelpath,errormsg = moose.readSBML(args.model,'/model' )
+		modelpath,errormsg = moose.readSBML(args.model,'/model' ,"ee")
 	elif ext == "g":
-		modelpath = moose.loadModel(args.model,'/model')
+		modelpath = moose.loadModel(args.model,'/model',"ee")
 	else:
 		print ("Input file should be genesis or SBML")
 		exit()
