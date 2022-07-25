@@ -176,7 +176,7 @@ def jsontoPng(modelpath, outputfile, ranksep = 0, hasLegend = True, fontsize = 1
 				for sp in items:
 						if items.index(sp) != 0:
 							if type(sp) is tuple:
-								print("111--- ",sp[1].name,moose.element(sp[1]).concInit, moose.element(sp[1]).n )
+								#print("111--- ",sp[1].name,moose.element(sp[1]).concInit, moose.element(sp[1]).n )
 
 								sps = sps+'\n'+sp[0]+' [label=\"'+moose.element(sp[1]).name+'\"'+',tooltip = \"concInit = '+str(float("{:.6f}".format(moose.element(sp[1]).concInit)))+'\nn = '+str(float("{:.6f}".format(moose.element(sp[1]).n)))+'"]'
 							else:
@@ -287,7 +287,7 @@ def writeSpecies(modelpath, groupmap):
 			molgrp = findGroup_compt(mol)
 			checkSpecialChar(startstringdigit,molgrp,molname)
 			molname = checkdigitEqu(startstringdigit,molgrp,mol)
-			print(" 288 ",mol)
+			#print(" 288 ",mol)
 			if molname not in node_color:
 				spe_color,mIndex = getColor(mIndex)
 				#node_color[molname] = spe_color
