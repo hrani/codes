@@ -35,6 +35,9 @@ from subprocess import call
 import matplotlib
 from collections import OrderedDict
 import argparse 
+from IPython.display import display
+from PIL import Image
+
 
 
 use_bw = False
@@ -263,7 +266,8 @@ def jsontoPng(modelpath, outputfile, ranksep = 0, hasLegend = True, fontsize = 1
 	
 	command = "dot -T"+ outputfiletype + " "+ outputfilename+".dot -o "+outputfile
 	call([command], shell=True)
-
+	path=outputfile
+	display(Image.open(path))
 def mooseIsInstance(melement, classNames):
     return moose.element(melement).className in classNames
 
@@ -392,15 +396,21 @@ def writeEnz(modelpath,groupmap,f_graph,edge_arrowsize,edge_weight,displayGroups
 	for enz in moose.wildcardFind( modelpath.path+'/##[ISA=EnzBase]'):
 		enzgrp = findGroup_compt(enz)
 		enzname = enz.name
+		
 		sublist = enz.neighbors['sub']
 		sublistU = unique(enz.neighbors['sub'])
 		prdlist = enz.neighbors['prd']
 		prdlistU = unique(enz.neighbors['prd'])
+		if len(sublist) == 0:
+			print(reacname+" substrate is empty")
+		if len(prdlist) == 0:
+			print(reacname+" substrate is empty")
+		
 		enzsize = "Enz"+str(numenz)
 		numenz+=1
-		edgelist1 = edgelist1+"\n"+enzsize+"[label=<"+enzsize+"> shape=oval]"
+		edgelist1 = edgelist1+"\n"+enzsize+"[label=<""> shape=oval width=0.5 height=0.2]"
 		#edgelist1 = edgelist1+"\n"+enzsize+"[label=<^E^> shape=oval]"
-		#edgelist1 = edgelist1+"\n"+enzsize+"[label=<^E^"+enzsize+"-"+enzname+"> shape=oval]"
+		#edgelist1 = edgelist1+"\n"+enzsize+"[label=<^E^"+enzsize+"-"+enzname+"> shape=oval width=0.1]"
 		
 		groupmap[enzgrp].append(enzsize)
 		enzpar = checkdigitEqu(startstringdigit,enzgrp,enz.parent)
@@ -463,12 +473,18 @@ def writeReac(modelpath,groupmap,f_graph,edge_arrowsize,edge_weight,displayGroup
 		reacgrp = findGroup_compt(reac)
 		reacname = reac.name
 		sublist = reac.neighbors['sub']
+		if len(sublist) == 0:
+			print(reacname+" substrate is empty")
 		sublistU = unique(reac.neighbors['sub'])
 		prdlist = reac.neighbors['prd']
+		print(prdlist)
+		if len(prdlist) == 0:
+			print(reacname+" product is empty")
+		
 		prdlistU = unique(reac.neighbors['prd'])
 		reacsize = "Reac"+str(numReac)
 		numReac+=1
-		edgelist1 = edgelist1+"\n"+reacsize+"[label=<"+reacsize+"> shape=hexagon]"
+		edgelist1 = edgelist1+"\n"+reacsize+"[label=<" "> shape=square width=0.2 ]"
 		groupmap[reacgrp].append(reacsize)
 		for sub in sublistU:
 			c = countX(sublist,sub)
