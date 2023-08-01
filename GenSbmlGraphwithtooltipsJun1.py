@@ -178,7 +178,7 @@ def jsontoPng(modelpath, outputfile, ranksep = 0, hasLegend = True, fontsize = 1
 		compt_no = 0
 		group_no = 0
 		for Cmpt in moose.wildcardFind(modelpath.path+'/##[ISA=ChemCompt]'):
-			print("cmpt ",Cmpt)
+			#print("cmpt ",Cmpt)
 			s = s+"\nsubgraph cluster_"+str(compt_no)+"\n{"+"\n"+"label=\""+Cmpt.name+"\";\npenwidth=4; margin=10.0\ncolor=\""+color+"\";\nfontsize="+str(fontsize + 2)+";\n"
 			sps = ""
 			if Cmpt in groupmap:
@@ -210,12 +210,12 @@ def jsontoPng(modelpath, outputfile, ranksep = 0, hasLegend = True, fontsize = 1
 					for sp in items:
 						if items.index(sp) != 0:
 							if type(sp) is tuple:
-								sps = sps+'\n'+sp[0]+' [label=\"'+moose.element(sp[1]).name+'\"]'
+								sps = sps+'\n'+sp[0]+' [label=\"'+moose.element(sp[1]).name+'\"'+',tooltip = \"concInit = '+str(float("{:.6f}".format(moose.element(sp[1]).concInit)))+'\nn = '+str(float("{:.6f}".format(moose.element(sp[1]).n)))+'"]'
 							else:
 								sps = sps+'\n'+sp
 						else:
 							if type(sp) is tuple:
-								sps = sps+sp[0]+' [label=\"'+moose.element(sp[1]).name+'\"]'
+								sps = sps+sp[0]+' [label=\"'+moose.element(sp[1]).name+'\"'+',tooltip = \"concInit = '+str(float("{:.6f}".format(moose.element(sp[1]).concInit)))+'\nn = '+str(float("{:.6f}".format(moose.element(sp[1]).n)))+'"]'
 							else:
 								sps = sps+'\n'+sp	
 					s = s+sps+"\n} style=invisible\n}"
@@ -296,7 +296,7 @@ def writeSpecies(modelpath, groupmap,displayGroups):
 		
 		if (mol.parent).className != 'Enz':
 			if displayGroups != "None":
-				print("mol ",mol,mol.parent,"Display ",displayGroups)
+				#print("mol ",mol,mol.parent,"Display ",displayGroups)
 				if mol.parent in displayGroups:
 					molgrp = findGroup_compt(mol)
 					checkSpecialChar(startstringdigit,molgrp,molname)
