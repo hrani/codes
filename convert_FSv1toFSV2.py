@@ -88,6 +88,8 @@ def main():
         help = "Optional: File to convert.", default = "" )
     parser.add_argument( "-o", "--outputDir", type = str, 
         help = "Optional: Directory in output file need to save.", default = "" )
+    parser.add_argument( "-map", "--map", type = str, 
+            help = "Optional: Name of file with new mapping scheme. Default: newMappingScheme.txt", default = "newMappingScheme.txt" )
     parser.add_argument('-a', '--alias',type=str,help="Optional: True alias will be written, False then will removed",default="True")
     args = parser.parse_args()
     listOfFiles =[]
@@ -114,7 +116,7 @@ def main():
             else:
                 print(args.exptfile," is not filename")
     global old_new_mapdict
-    with open('/home/harsharani/AutSim/development_branch_FS_HT/Nisha_htpipeline_Mar112024/findsim_model_map4mNisha/newMappingScheme.txt','r') as file:
+    with open(args.map, 'r') as file:
         old_new_mapdict = {}
         for line in file:
             key, value = line.strip().split(':')
@@ -207,10 +209,12 @@ def main():
                             findsim["Readouts"] = {key if key != 'entities' else 'entity': value for key, value in findsim["Readouts"].items()}
                             readout_new = {}
                             for roI,roI_value in findsim["Readouts"].items():
+                                '''
                                 if roI == "data":
                                     rdata = findsim["Readouts"]
                                     for i in range(len(rdata['data'])):
                                         rdata['data'][i] = '[' + ', '.join(map(str, rdata['data'][i])) + ']'
+                                '''
                                 if roI == "entity":
                                     if isinstance(findsim["Readouts"]["entity"],list):
                                         Rd_entity = findsim["Readouts"]["entity"][0]
@@ -351,7 +355,7 @@ def main():
                                         new_pc = {}
                                         
                                         if pc["name"] not in old_new_mapdict:
-                                            print("\t\t Modification->ParamterChange->name ",pc["name"]," not found in the map file program exited")
+                                            print("\t\t Modification->ParameterChange->name '"+pc["name"]+"' not found in the map file. Program exited.")
                                             notfound.append(pc["name"])
                                             exit()
                                         
@@ -378,8 +382,8 @@ def main():
                                     
 
                 outputdirectory = args.outputDir
-                outputfilename = outputdirectory+os.path.splitext(filename)[0]+"_n.json" 
-                print("outputdirectory ",outputfilename)
+                outputfilename = outputdirectory+"/"+os.path.splitext(filename)[0]+".json" 
+                print("output: ",outputdirectory + "/"+  outputfilename)
                 #del outputfilename
 
                 with open(outputfilename, 'w') as fout:
@@ -389,66 +393,11 @@ def main():
                         merged_json = {**findsim}
                     json_dumps_str = json.dumps(merged_json)#, indent=4)
                     
-                    # start_index = json_dumps_str.find('"entity"') + len('"entity"')
-                    # end_index = json_dumps_str.find('"field"')
-                    # space_index = json_dumps_str.find(' ',end_index)
-                    # entity_str = json_dumps_str[start_index:space_index-(space_index-end_index)].replace('\n', '').replace(' ', '')+"\n"+" "*(space_index-end_index+4)
-                    
-                    #modified_json_content = modify_entities(json_dumps_str)
-                    #print("394 ",modified_json_content)
-                    #modified_json_content = json_dumps_str[:start_index] + entity_str + json_dumps_str[end_index:]
                     f ,j = modify_entities(json_dumps_str)
                     #print("j ",type(j))
                     j_dict = json.loads(j)
                     json.dump(j_dict, fout, indent=4) 
-                    #print(j, file=fout, indent=4)
-                    #indented_json_string1 = j.replace('\n                ]',  ']').replace('\n                    ','')
-                    #indented_json_string2 = indented_json_string1.replace('\"[',  '[').replace(']\"' ,']')
-                    #print(json.dumps(indented_json_string2,indent=4), file=fout)
-                    #print(json.dumps(j, indent=4), file=fout)
-                    #print(f,type(f))
                     i = 1
-                    '''
-                    modified_json_content =""
-                    for ff in f:
-                        entity_str = ff[2].replace('\n', '').replace(' ', '')#+"\n"+" "*(4)
-                        if i == 1:
-                            modified_json_content += json_dumps_str[:ff[0]-1] + entity_str
-                            previos_end = ff[1]
-                            i = 0 
-                        else:
-                            modified_json_content += json_dumps_str[previos_end:ff[0]-1]+entity_str
-                            previos_end = ff[1]
-
-                        print("\n\n! ",modified_json_content)
-                        #+ json_dumps_str[ff[1]:]
-                
-                    indented_json_string1 = modified_json_content.replace('\n                ]',  ']').replace('\n                    ','')
-                    indented_json_string2 = indented_json_string1.replace('\"[',  '[').replace(']\"' ,']')
-                    print(indented_json_string2, file=fout)
-                    
-                    #file_path = outputdirectory+os.path.splitext(filename)[0]+"_n.json"
-                    '''
-                # with open(file_path, 'r') as file:
-                #     lines = file.readlines()
-
-                # # # Perform replacements
-                
-                # substrings_to_match = ["\"name\"", "\"alias\""]
-                # indentation = 0
-                # for i, line in enumerate(lines):
-                # #     # if '"{\'' in line:
-                # #     #     lines[i] = line.replace('\"{\'',"{\'").replace('}\"','}').replace('\'','\"')
-                #     if '},{' in line:
-                #         print("364 ",i,line)
-                #         #line[i] = line.replace('},\n{','}')
-                #         lines[i] = line.replace('},{','},\n             {').replace('\"{',"{").replace('},\"','}').replace('\'','\"')
-                    
-                # # # Write the modified content back to the file
-                # with open(file_path, 'w') as file:
-                #     file.writelines(lines)            
-        
-                # print("File converted and saved at",outputdirectory+os.path.splitext(filename)[0]+"_n.json")
                 if notfound:
                     print("Not Found ",str(set(notfound)))
                 if itemstodelete_notfound:
@@ -456,5 +405,3 @@ def main():
                 #return file_path
 if __name__ == "__main__":
     main()
-    #file_path = outputdirectory+os.path.splitext(filename)[0]+"_n.json"
-   
